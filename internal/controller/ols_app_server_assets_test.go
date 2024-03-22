@@ -2,7 +2,6 @@ package controller
 
 import (
 	"path"
-	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -46,7 +45,7 @@ var _ = Describe("App server assets", func() {
 
 		It("should generate the olsconfig config map", func() {
 			cm, err := r.generateOLSConfigMap(cr)
-			OLSRedisMaxMemory := intstr.FromString(RedisMaxMemory)
+			/*OLSRedisMaxMemory := intstr.FromString(RedisMaxMemory)*/
 			Expect(err).NotTo(HaveOccurred())
 			Expect(cm.Name).To(Equal(OLSConfigCmName))
 			Expect(cm.Namespace).To(Equal(OLSNamespaceDefault))
@@ -62,15 +61,23 @@ var _ = Describe("App server assets", func() {
 						AppLogLevel: "INFO",
 						LibLogLevel: "INFO",
 					},
+					/*
+						ConversationCache: ConversationCacheConfig{
+							Type: "redis",
+							Redis: RedisCacheConfig{
+								Host:            strings.Join([]string{RedisServiceName, OLSNamespaceDefault, "svc"}, "."),
+								Port:            RedisServicePort,
+								MaxMemory:       &OLSRedisMaxMemory,
+								MaxMemoryPolicy: RedisMaxMemoryPolicy,
+								PasswordPath:    path.Join(CredentialsMountRoot, RedisSecretName, OLSComponentPasswordFileName),
+								CACertPath:      path.Join(OLSAppCertsMountRoot, RedisCertsSecretName, RedisCAVolume, "service-ca.crt"),
+							},
+						},
+					*/
 					ConversationCache: ConversationCacheConfig{
-						Type: "redis",
-						Redis: RedisCacheConfig{
-							Host:            strings.Join([]string{RedisServiceName, OLSNamespaceDefault, "svc"}, "."),
-							Port:            RedisServicePort,
-							MaxMemory:       &OLSRedisMaxMemory,
-							MaxMemoryPolicy: RedisMaxMemoryPolicy,
-							PasswordPath:    path.Join(CredentialsMountRoot, RedisSecretName, OLSComponentPasswordFileName),
-							CACertPath:      path.Join(OLSAppCertsMountRoot, RedisCertsSecretName, RedisCAVolume, "service-ca.crt"),
+						Type: "memory",
+						Memory: MemoryCacheConfig{
+							MaxEntries: 1000,
 						},
 					},
 					TLSConfig: TLSConfig{
@@ -250,22 +257,40 @@ var _ = Describe("App server assets", func() {
 			// todo: this test is not complete
 			// generateOLSConfigMap should return an error if the CR is missing required fields
 			cm, err := r.generateOLSConfigMap(cr)
+			/*OLSRedisMaxMemory := intstr.FromString(RedisMaxMemory)*/
 			Expect(err).NotTo(HaveOccurred())
 			Expect(cm.Name).To(Equal(OLSConfigCmName))
 			Expect(cm.Namespace).To(Equal(OLSNamespaceDefault))
+			/*
+			   			const expectedConfigStr = `dev_config:
+			   disable_auth: false
+			   llm_providers: []
+			   ols_config:
+			     conversation_cache:
+			       redis:
+			         ca_cert_path: /etc/certs/lightspeed-redis-certs/cm-olsredisca/service-ca.crt
+			         host: lightspeed-redis-server.openshift-lightspeed.svc
+			         max_memory: 1024mb
+			         max_memory_policy: allkeys-lru
+			         password_path: /etc/credentials/lightspeed-redis-secret/password
+			         port: 6379
+			       type: redis
+			     logging_config:
+			       app_log_level: ""
+			       lib_log_level: ""
+			     tls_config:
+			       tls_certificate_path: /etc/certs/lightspeed-tls/tls.crt
+			       tls_key_path: /etc/certs/lightspeed-tls/tls.key
+			   `
+			*/
 			const expectedConfigStr = `dev_config:
   disable_auth: false
 llm_providers: []
 ols_config:
   conversation_cache:
-    redis:
-      ca_cert_path: /etc/certs/lightspeed-redis-certs/cm-olsredisca/service-ca.crt
-      host: lightspeed-redis-server.openshift-lightspeed.svc
-      max_memory: 1024mb
-      max_memory_policy: allkeys-lru
-      password_path: /etc/credentials/lightspeed-redis-secret/password
-      port: 6379
-    type: redis
+    memory:
+      max_entries: 1000
+    type: memory
   logging_config:
     app_log_level: ""
     lib_log_level: ""

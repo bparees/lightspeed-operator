@@ -73,7 +73,9 @@ type ConversationCacheConfig struct {
 	// Type of cache to use. Default: "redis"
 	Type string `json:"type" default:"redis"`
 	// Redis cache configuration
-	Redis RedisCacheConfig `json:"redis,omitempty"`
+	/*Redis RedisCacheConfig `json:"redis,omitempty"`*/
+	// Memory cache configuration
+	Memory MemoryCacheConfig `json:"memory,omitempty"`
 }
 
 type RedisCacheConfig struct {
@@ -89,6 +91,11 @@ type RedisCacheConfig struct {
 	PasswordPath string `json:"password_path,omitempty"`
 	// Redis CA certificate path
 	CACertPath string `json:"ca_cert_path,omitempty"`
+}
+
+type MemoryCacheConfig struct {
+	// MaxEntries limits the number of items in the memory cache
+	MaxEntries int `json:"max_entries,omitempty"`
 }
 
 type DevConfig struct {
